@@ -66,19 +66,24 @@ func main() {
 	})
 
 	// Setup HTTP server
+	host := os.Getenv("HOST")
+	if host == "" {
+		host = "localhost"
+	}
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
 
 	srv := &http.Server{
-		Addr:    "localhost:" + port,
+		Addr:    host + ":" + port,
 		Handler: router,
 	}
 
 	// Run the server in a goroutine so it doesn't block
 	go func() {
-		log.Printf("Server running on port %s", port)
+		log.Printf("Server running on %s:%s", host, port)
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Fatalf("Error starting server: %v", err)
 		}
