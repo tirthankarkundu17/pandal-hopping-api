@@ -10,14 +10,13 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-// RunMigrations executes all necessary migrations/index creations for the database
+// RunMigrations executes all necessary index creations
 func RunMigrations(collection *mongo.Collection) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	log.Println("Running migrations...")
 
-	// Define the indexes to create
 	indexModels := []mongo.IndexModel{
 		{
 			Keys: bson.M{

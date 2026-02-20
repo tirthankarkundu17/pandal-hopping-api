@@ -10,10 +10,12 @@ import (
 	"syscall"
 	"time"
 
-	"tirthankarkundu17/pandal-hopping-api/config"
-	"tirthankarkundu17/pandal-hopping-api/controllers"
-	"tirthankarkundu17/pandal-hopping-api/migrations"
-	"tirthankarkundu17/pandal-hopping-api/routes"
+	"tirthankarkundu17/pandal-hopping-api/internal/config"
+	"tirthankarkundu17/pandal-hopping-api/internal/handlers"
+	"tirthankarkundu17/pandal-hopping-api/internal/migrations"
+	"tirthankarkundu17/pandal-hopping-api/internal/repository"
+	"tirthankarkundu17/pandal-hopping-api/internal/routes"
+	"tirthankarkundu17/pandal-hopping-api/internal/services"
 
 	"github.com/gin-gonic/gin"
 )
@@ -24,7 +26,6 @@ func main() {
 
 	// Ensure DB disconnection on exit
 	defer func() {
-		// 5 seconds timeout for disconnecting from DB
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 		if err := client.Disconnect(ctx); err != nil {
@@ -39,19 +40,28 @@ func main() {
 	// Run Database Migrations
 	migrations.RunMigrations(pandalCollection)
 
-	// Initialize the controllers
-	pandalController := controllers.NewPandalController(pandalCollection)
+	// Initialize the dependency graph (Repository -> Service -> Handler)
+	pandalRepo := repository.NewPandalRepository(pandalCollection)
+	pandalService := services.NewPandalService(pandalRepo)
+	pandalHandler := handlers.NewPandalHandler(pandalService)
 
 	// Setup Gin router
 	router := gin.Default()
 
 	// Setup routes
-	routes.PandalRoute(router, pandalController)
+	routes.PandalRoute(router, pandalHandler)
 
 	// Default response
 	router.GET("/", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"message": "Welcome to the Pandal Hopping API",
+		})
+	})
+
+	// Health check endpoint
+	router.GET("/health", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"status": "ok",
 		})
 	})
 

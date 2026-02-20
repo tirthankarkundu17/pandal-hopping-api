@@ -6,11 +6,13 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+// Location model
 type Location struct {
 	Type        string    `json:"type" bson:"type" binding:"required"`
 	Coordinates []float64 `json:"coordinates" bson:"coordinates" binding:"required"`
 }
 
+// Pandal structure
 type Pandal struct {
 	ID          primitive.ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
 	Name        string             `json:"name" bson:"name" binding:"required"`
