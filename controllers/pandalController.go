@@ -3,6 +3,7 @@ package controllers
 import (
 	"context"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -70,15 +71,54 @@ func (pc *PandalController) CreatePandal() gin.HandlerFunc {
 	}
 }
 
-// GetAllPandals handler for retrieving all pandals
+// GetAllPandals handler for retrieving all pandals optionally filtered by proximity
 func (pc *PandalController) GetAllPandals() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
 		defer cancel()
 
 		var pandals []models.Pandal
+		filter := bson.M{}
 
-		cursor, err := pc.collection.Find(ctx, bson.M{})
+		lngStr := c.Query("lng")
+		latStr := c.Query("lat")
+		radiusStr := c.Query("radius")
+
+		// If coordinates are provided, perform geospatial search
+		if lngStr != "" && latStr != "" {
+			lng, err1 := strconv.ParseFloat(lngStr, 64)
+			lat, err2 := strconv.ParseFloat(latStr, 64)
+
+			if err1 != nil || err2 != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid lng or lat coordinates"})
+				return
+			}
+
+			// Default radius to 5000 meters (5km) if not provided
+			radius := 5000.0
+			if radiusStr != "" {
+				r, err := strconv.ParseFloat(radiusStr, 64)
+				if err == nil {
+					radius = r
+				}
+			}
+
+			filter["location"] = bson.M{
+				"$nearSphere": bson.M{
+					"$geometry": bson.M{
+						"type":        "Point",
+						"coordinates": []float64{lng, lat},
+					},
+					"$maxDistance": radius, // in meters
+				},
+			}
+		} else if lngStr != "" || latStr != "" {
+			// If only one is provided, flag it as a bad request
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Both lng and lat query parameters are required for a geospatial search"})
+			return
+		}
+
+		cursor, err := pc.collection.Find(ctx, filter)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
