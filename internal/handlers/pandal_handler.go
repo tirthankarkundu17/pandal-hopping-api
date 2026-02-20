@@ -152,7 +152,16 @@ func (h *PandalHandler) ApprovePandal() gin.HandlerFunc {
 			return
 		}
 
-		pandal, err := h.service.ApprovePandal(ctx, objID)
+		var reqBody struct {
+			ApproverID string `json:"approverID" binding:"required"`
+		}
+
+		if err := c.ShouldBindJSON(&reqBody); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "approverID is required in the request body"})
+			return
+		}
+
+		pandal, err := h.service.ApprovePandal(ctx, objID, reqBody.ApproverID)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error approving pandal: " + err.Error()})
 			return

@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"errors"
 	"os"
 	"strconv"
 	"time"
@@ -19,7 +20,7 @@ type PandalService interface {
 	CreatePandal(ctx context.Context, pandal models.Pandal) (*mongo.InsertOneResult, error)
 	GetPandals(ctx context.Context, lng, lat, radius float64, hasCoords bool) ([]models.Pandal, error)
 	GetPendingPandals(ctx context.Context, lng, lat, radius float64, hasCoords bool) ([]models.Pandal, error)
-	ApprovePandal(ctx context.Context, id primitive.ObjectID) (*models.Pandal, error)
+	ApprovePandal(ctx context.Context, id primitive.ObjectID, approverID string) (*models.Pandal, error)
 }
 
 // pandalService implements PandalService interface
@@ -46,6 +47,7 @@ func (s *pandalService) CreatePandal(ctx context.Context, pandal models.Pandal) 
 
 	pandal.Status = "pending"
 	pandal.ApprovalCount = 0
+	pandal.ApprovedBy = []string{}
 	pandal.ID = primitive.NewObjectID()
 
 	return s.repo.Create(ctx, pandal)
@@ -84,7 +86,7 @@ func (s *pandalService) GetPendingPandals(ctx context.Context, lng, lat, radius 
 }
 
 // ApprovePandal increments the approval count and updates status to approved if consensus is met
-func (s *pandalService) ApprovePandal(ctx context.Context, id primitive.ObjectID) (*models.Pandal, error) {
+func (s *pandalService) ApprovePandal(ctx context.Context, id primitive.ObjectID, approverID string) (*models.Pandal, error) {
 	pandal, err := s.repo.FindByID(ctx, id)
 	if err != nil {
 		return nil, err
@@ -95,8 +97,16 @@ func (s *pandalService) ApprovePandal(ctx context.Context, id primitive.ObjectID
 		return pandal, nil
 	}
 
+	// Validate this user hasn't already approved the pandal
+	for _, user := range pandal.ApprovedBy {
+		if user == approverID {
+			return nil, errors.New("user has already approved this pandal")
+		}
+	}
+
 	newCount := pandal.ApprovalCount + 1
 	status := pandal.Status
+	approvedBy := append(pandal.ApprovedBy, approverID)
 
 	// Set required threshold for approval from environment variables, defaulting to 3
 	reqApprovalsStr := os.Getenv("REQUIRED_APPROVALS")
@@ -115,6 +125,7 @@ func (s *pandalService) ApprovePandal(ctx context.Context, id primitive.ObjectID
 		"$set": bson.M{
 			"approvalCount": newCount,
 			"status":        status,
+			"approvedBy":    approvedBy,
 		},
 	}
 
@@ -125,6 +136,7 @@ func (s *pandalService) ApprovePandal(ctx context.Context, id primitive.ObjectID
 
 	pandal.ApprovalCount = newCount
 	pandal.Status = status
+	pandal.ApprovedBy = approvedBy
 
 	return pandal, nil
 }

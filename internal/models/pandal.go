@@ -25,5 +25,6 @@ type Pandal struct {
 	RatingCount   int                `json:"ratingCount" bson:"ratingCount"`
 	Status        string             `json:"status" bson:"status"` // "pending", "approved", "rejected"
 	ApprovalCount int                `json:"approvalCount" bson:"approvalCount"`
+	ApprovedBy    []string           `json:"approvedBy" bson:"approvedBy"`
 	CreatedAt     time.Time          `json:"createdAt" bson:"createdAt"`
 }
