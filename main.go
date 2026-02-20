@@ -12,6 +12,7 @@ import (
 
 	"tirthankarkundu17/pandal-hopping-api/config"
 	"tirthankarkundu17/pandal-hopping-api/controllers"
+	"tirthankarkundu17/pandal-hopping-api/migrations"
 	"tirthankarkundu17/pandal-hopping-api/routes"
 
 	"github.com/gin-gonic/gin"
@@ -34,6 +35,9 @@ func main() {
 
 	// Setup MongoDB Collection
 	pandalCollection := config.GetCollection(client, "durgapuja")
+
+	// Run Database Migrations
+	migrations.RunMigrations(pandalCollection)
 
 	// Initialize the controllers
 	pandalController := controllers.NewPandalController(pandalCollection)
