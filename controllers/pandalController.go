@@ -28,7 +28,7 @@ func NewPandalController(collection *mongo.Collection) *PandalController {
 // CreatePandal handler for inserting a new pandal
 func (pc *PandalController) CreatePandal() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
 		defer cancel()
 
 		var pandal models.Pandal
@@ -73,7 +73,7 @@ func (pc *PandalController) CreatePandal() gin.HandlerFunc {
 // GetAllPandals handler for retrieving all pandals
 func (pc *PandalController) GetAllPandals() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
 		defer cancel()
 
 		var pandals []models.Pandal

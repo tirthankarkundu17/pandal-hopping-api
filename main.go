@@ -23,7 +23,10 @@ func main() {
 
 	// Ensure DB disconnection on exit
 	defer func() {
-		if err := client.Disconnect(context.TODO()); err != nil {
+		// 5 seconds timeout for disconnecting from DB
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if err := client.Disconnect(ctx); err != nil {
 			log.Fatalf("Error disconnecting from MongoDB: %v", err)
 		}
 		log.Println("MongoDB disconnected.")
