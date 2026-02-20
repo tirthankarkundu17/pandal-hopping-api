@@ -17,18 +17,26 @@ func RunMigrations(collection *mongo.Collection) {
 
 	log.Println("Running migrations...")
 
-	// Create 2dsphere index on the location field
-	indexModel := mongo.IndexModel{
-		Keys: bson.M{
-			"location": "2dsphere",
+	// Define the indexes to create
+	indexModels := []mongo.IndexModel{
+		{
+			Keys: bson.M{
+				"location": "2dsphere",
+			},
+			Options: options.Index().SetName("location_2dsphere_index"),
 		},
-		Options: options.Index().SetName("location_2dsphere_index"),
+		{
+			Keys: bson.M{
+				"area": 1,
+			},
+			Options: options.Index().SetName("area_index"),
+		},
 	}
 
-	indexName, err := collection.Indexes().CreateOne(ctx, indexModel)
+	indexNames, err := collection.Indexes().CreateMany(ctx, indexModels)
 	if err != nil {
-		log.Fatalf("Failed to create geospatial index: %v", err)
+		log.Fatalf("Failed to create indexes: %v", err)
 	}
 
-	log.Printf("Migration successful: Created index %s\n", indexName)
+	log.Printf("Migration successful: Created indexes %v\n", indexNames)
 }
