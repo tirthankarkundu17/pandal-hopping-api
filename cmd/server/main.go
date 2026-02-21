@@ -32,6 +32,7 @@ func main() {
 
 	// Connect to the Database
 	client := config.ConnectDB()
+	go connectPostgres()
 
 	// Ensure DB disconnection on exit
 	defer func() {
@@ -41,8 +42,6 @@ func main() {
 			log.Fatalf("Error disconnecting from MongoDB: %v", err)
 		}
 		log.Println("MongoDB disconnected.")
-
-		connectPostgres()
 	}()
 
 	// Setup MongoDB Collections
