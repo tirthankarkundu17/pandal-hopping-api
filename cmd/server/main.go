@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -19,7 +18,6 @@ import (
 	"tirthankarkundu17/pandal-hopping-api/internal/services"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jackc/pgx/v5"
 	"github.com/joho/godotenv"
 )
 
@@ -32,7 +30,6 @@ func main() {
 
 	// Connect to the Database
 	client := config.ConnectDB()
-	go connectPostgres()
 
 	// Ensure DB disconnection on exit
 	defer func() {
@@ -123,25 +120,4 @@ func main() {
 	}
 
 	log.Println("Server exiting")
-}
-
-func connectPostgres() {
-
-	ctx := context.Background()
-	databaseURL := os.Getenv("DATABASE_URL")
-	fmt.Println(databaseURL)
-
-	conn, err := pgx.Connect(ctx, databaseURL)
-	if err != nil {
-		panic(err)
-	}
-	defer conn.Close(ctx)
-
-	var greeting string
-	err = conn.QueryRow(ctx, "select 'Connected to Supabase!'").Scan(&greeting)
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Println(greeting)
 }
