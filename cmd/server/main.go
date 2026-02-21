@@ -23,7 +23,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
-func main1() {
+func main() {
 	// Load environment variables
 	err := godotenv.Load()
 	if err != nil {
