@@ -13,25 +13,44 @@ import (
 
 var DB *mongo.Client
 
-// ConnectDB establishes the connection to MongoDB
+const (
+	MAX_RETRIES = 5
+)
+
+// ConnectDB establishes the connection to MongoDB with retry logic
 func ConnectDB() *mongo.Client {
 	mongoURI := os.Getenv("MONGO_URI")
 	if mongoURI == "" {
 		log.Fatal("MONGO_URI environment variable not set")
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+	clientOptions := options.Client().
+		ApplyURI(mongoURI).
+		SetServerSelectionTimeout(5 * time.Second).
+		SetMinPoolSize(2).
+		SetMaxPoolSize(20)
 
-	clientOptions := options.Client().ApplyURI(mongoURI)
-	client, err := mongo.Connect(ctx, clientOptions)
-	if err != nil {
-		log.Fatal(err)
+	var client *mongo.Client
+	var err error
+
+	// Retry loop for initial connection (handles Docker/k8s startup races)
+	for i := 1; i <= MAX_RETRIES; i++ {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		client, err = mongo.Connect(ctx, clientOptions)
+		if err == nil {
+			err = client.Ping(ctx, nil)
+		}
+		cancel()
+
+		if err == nil {
+			break
+		}
+		log.Printf("MongoDB connection attempt %d/%d failed: %v. Retrying in 3s...", i, MAX_RETRIES, err)
+		time.Sleep(3 * time.Second)
 	}
 
-	err = client.Ping(ctx, nil)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Could not connect to MongoDB after %d attempts: %v", MAX_RETRIES, err)
 	}
 
 	fmt.Println("Connected to MongoDB!")
@@ -43,7 +62,7 @@ func ConnectDB() *mongo.Client {
 func GetCollection(client *mongo.Client, collectionName string) *mongo.Collection {
 	dbName := os.Getenv("DB_NAME")
 	if dbName == "" {
-		dbName = "pandal_hopping"
+		log.Fatal("DB_NAME environment variable not set")
 	}
 	collection := client.Database(dbName).Collection(collectionName)
 	return collection

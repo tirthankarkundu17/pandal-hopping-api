@@ -45,7 +45,7 @@ func (s *pandalService) CreatePandal(ctx context.Context, pandal models.Pandal) 
 		pandal.CreatedAt = time.Now()
 	}
 
-	pandal.Status = "pending"
+	pandal.Status = models.StatusPending
 	pandal.ApprovalCount = 0
 	pandal.ApprovedBy = []string{}
 	pandal.ID = primitive.NewObjectID()
@@ -53,7 +53,7 @@ func (s *pandalService) CreatePandal(ctx context.Context, pandal models.Pandal) 
 	return s.repo.Create(ctx, pandal)
 }
 
-func (s *pandalService) buildGeospatialFilter(status string, lng, lat, radius float64, hasCoords bool) bson.M {
+func (s *pandalService) buildGeospatialFilter(status models.PandalStatus, lng, lat, radius float64, hasCoords bool) bson.M {
 	filter := bson.M{"status": status}
 
 	if hasCoords {
@@ -75,13 +75,13 @@ func (s *pandalService) buildGeospatialFilter(status string, lng, lat, radius fl
 
 // GetPandals returns only approved pandals
 func (s *pandalService) GetPandals(ctx context.Context, lng, lat, radius float64, hasCoords bool) ([]models.Pandal, error) {
-	filter := s.buildGeospatialFilter("approved", lng, lat, radius, hasCoords)
+	filter := s.buildGeospatialFilter(models.StatusApproved, lng, lat, radius, hasCoords)
 	return s.repo.FindAll(ctx, filter)
 }
 
 // GetPendingPandals returns pandals waiting for approval
 func (s *pandalService) GetPendingPandals(ctx context.Context, lng, lat, radius float64, hasCoords bool) ([]models.Pandal, error) {
-	filter := s.buildGeospatialFilter("pending", lng, lat, radius, hasCoords)
+	filter := s.buildGeospatialFilter(models.StatusPending, lng, lat, radius, hasCoords)
 	return s.repo.FindAll(ctx, filter)
 }
 
@@ -93,7 +93,7 @@ func (s *pandalService) ApprovePandal(ctx context.Context, id primitive.ObjectID
 	}
 
 	// If already approved, skip
-	if pandal.Status == "approved" {
+	if pandal.Status == models.StatusApproved {
 		return pandal, nil
 	}
 
@@ -118,7 +118,7 @@ func (s *pandalService) ApprovePandal(ctx context.Context, id primitive.ObjectID
 	}
 
 	if newCount >= reqApprovals {
-		status = "approved"
+		status = models.StatusApproved
 	}
 
 	update := bson.M{
