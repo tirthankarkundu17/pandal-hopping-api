@@ -1,0 +1,49 @@
+# Files and directories that should NOT be copied into the Docker image.
+# Keep this in sync with .gitignore where appropriate.
+
+# Git metadata
+.git
+.gitignore
+
+# Local environment files — never bake secrets into images!
+.env
+.env.*
+!.env.example
+
+# Pre-built Windows/local binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+server.exe
+server
+
+# Test artefacts
+*.test
+*.out
+
+# IDE / editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# Docker files themselves (not needed inside the image)
+Dockerfile
+.dockerignore
+docker-compose*.yml
+
+# Makefile
+Makefile
+
+# Go workspace files
+go.work
+go.work.sum
+
+# README
+README.md
