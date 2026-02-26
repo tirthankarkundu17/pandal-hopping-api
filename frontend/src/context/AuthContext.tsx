@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import * as SecureStore from 'expo-secure-store';
+import { storage } from '../utils/storage';
 import { authApi } from '../api/auth';
 
 interface AuthContextType {
@@ -22,7 +22,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const checkAuth = async () => {
         try {
-            const token = await SecureStore.getItemAsync('access_token');
+            const token = await storage.getItemAsync('access_token');
             setIsAuthenticated(!!token);
         } finally {
             setIsLoading(false);

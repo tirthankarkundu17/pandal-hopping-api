@@ -1,5 +1,5 @@
 import { api } from './client';
-import * as SecureStore from 'expo-secure-store';
+import { storage } from '../utils/storage';
 
 export interface AuthResponse {
   access_token: string;
@@ -16,18 +16,18 @@ export const authApi = {
   login: async (email: string, password: string): Promise<AuthResponse> => {
     const res = await api.post<AuthResponse>('/auth/login', { email, password });
     const { access_token, refresh_token } = res.data;
-    await SecureStore.setItemAsync('access_token', access_token);
-    await SecureStore.setItemAsync('refresh_token', refresh_token);
+    await storage.setItemAsync('access_token', access_token);
+    await storage.setItemAsync('refresh_token', refresh_token);
     return res.data;
   },
 
   logout: async () => {
-    await SecureStore.deleteItemAsync('access_token');
-    await SecureStore.deleteItemAsync('refresh_token');
+    await storage.deleteItemAsync('access_token');
+    await storage.deleteItemAsync('refresh_token');
   },
 
   isAuthenticated: async (): Promise<boolean> => {
-    const token = await SecureStore.getItemAsync('access_token');
+    const token = await storage.getItemAsync('access_token');
     return !!token;
   },
 };

@@ -30,24 +30,28 @@ export interface CreatePandalInput {
   images?: string[];
 }
 
+interface ApiResponse<T> {
+  data: T;
+}
+
 export const pandalApi = {
   listApproved: async (): Promise<Pandal[]> => {
-    const res = await api.get<Pandal[]>('/pandals/');
-    return res.data;
+    const res = await api.get<ApiResponse<Pandal[]>>('/pandals/');
+    return res.data.data;
   },
 
   listPending: async (): Promise<Pandal[]> => {
-    const res = await api.get<Pandal[]>('/pandals/pending');
-    return res.data;
+    const res = await api.get<ApiResponse<Pandal[]>>('/pandals/pending');
+    return res.data.data;
   },
 
   createPandal: async (data: CreatePandalInput): Promise<Pandal> => {
-    const res = await api.post<Pandal>('/pandals/', data);
-    return res.data;
+    const res = await api.post<ApiResponse<Pandal>>('/pandals/', data);
+    return res.data.data;
   },
 
   approvePandal: async (id: string): Promise<Pandal> => {
-    const res = await api.put<Pandal>(`/pandals/${id}/approve`);
-    return res.data;
+    const res = await api.put<ApiResponse<Pandal>>(`/pandals/${id}/approve`);
+    return res.data.data;
   },
 };
