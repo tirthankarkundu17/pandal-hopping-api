@@ -38,6 +38,9 @@ func (h *PandalHandler) CreatePandal() gin.HandlerFunc {
 			return
 		}
 
+		// Inject the authenticated user as the creator
+		pandal.CreatedBy = c.GetString("userID")
+
 		result, err := h.service.CreatePandal(ctx, pandal)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error while inserting data: " + err.Error()})
@@ -148,7 +151,9 @@ func (h *PandalHandler) GetPendingPandals() gin.HandlerFunc {
 			return
 		}
 
-		pandals, err := h.service.GetPendingPandals(ctx, lng, lat, radius, hasCoords)
+		userID := c.GetString("userID")
+
+		pandals, err := h.service.GetPendingPandals(ctx, lng, lat, radius, hasCoords, userID)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return

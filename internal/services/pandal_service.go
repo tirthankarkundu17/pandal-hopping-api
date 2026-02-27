@@ -19,7 +19,7 @@ import (
 type PandalService interface {
 	CreatePandal(ctx context.Context, pandal models.Pandal) (*mongo.InsertOneResult, error)
 	GetPandals(ctx context.Context, lng, lat, radius float64, hasCoords bool, tag, search string) ([]models.Pandal, error)
-	GetPendingPandals(ctx context.Context, lng, lat, radius float64, hasCoords bool) ([]models.Pandal, error)
+	GetPendingPandals(ctx context.Context, lng, lat, radius float64, hasCoords bool, excludeUserID string) ([]models.Pandal, error)
 	GetDistricts(ctx context.Context) ([]models.District, error)
 	ApprovePandal(ctx context.Context, id primitive.ObjectID, approverID string) (*models.Pandal, error)
 }
@@ -96,8 +96,18 @@ func (s *pandalService) GetPandals(ctx context.Context, lng, lat, radius float64
 }
 
 // GetPendingPandals returns pandals waiting for approval
-func (s *pandalService) GetPendingPandals(ctx context.Context, lng, lat, radius float64, hasCoords bool) ([]models.Pandal, error) {
+func (s *pandalService) GetPendingPandals(ctx context.Context, lng, lat, radius float64, hasCoords bool, excludeUserID string) ([]models.Pandal, error) {
 	filter := s.buildGeospatialFilter(models.StatusPending, lng, lat, radius, hasCoords, "", "")
+
+	if excludeUserID != "" {
+		filter["createdBy"] = bson.M{"$ne": excludeUserID}
+	}
+
+	// Also exclude pandals the user has already approved
+	if excludeUserID != "" {
+		filter["approvedBy"] = bson.M{"$ne": excludeUserID}
+	}
+
 	return s.repo.FindAll(ctx, filter)
 }
 
