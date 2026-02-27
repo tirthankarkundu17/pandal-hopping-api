@@ -111,3 +111,27 @@ func ValidateLocation(countryCode, stateCode, districtCode string) error {
 
 	return nil
 }
+
+// GetDistrictName looks up the human-readable name for a given country, state, and district code
+// Returns the original code if the name cannot be found
+func GetDistrictName(countryCode, stateCode, districtCode string) string {
+	// If an explicit country code is provided and it's invalid, bail early.
+	if countryCode != "" && adminData.Country.Code != countryCode {
+		return districtCode
+	}
+
+	for _, state := range adminData.States {
+		// If a state filter is passed, skip other states.
+		if stateCode != "" && state.Code != stateCode {
+			continue
+		}
+
+		for _, district := range state.Districts {
+			if district.Code == districtCode {
+				return district.Name
+			}
+		}
+	}
+
+	return districtCode
+}

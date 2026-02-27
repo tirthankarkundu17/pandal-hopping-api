@@ -8,7 +8,7 @@ import (
 type FoodStop struct {
 	ID       primitive.ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
 	Name     string             `json:"name"         bson:"name"          binding:"required"`
-	Type     string             `json:"type"         bson:"type"`          // "Restaurant", "Fine Dining", "Street Food"
+	Type     string             `json:"type"         bson:"type"` // "Restaurant", "Fine Dining", "Street Food"
 	Image    string             `json:"image"        bson:"image"`
 	Location Location           `json:"location"     bson:"location"      binding:"required"`
 	Area     string             `json:"area"         bson:"area"`
@@ -17,6 +17,7 @@ type FoodStop struct {
 
 // District is a lightweight view derived from aggregating pandal areas
 type District struct {
-	Name       string `json:"name"       bson:"_id"`
-	PandalCount int   `json:"pandalCount" bson:"pandalCount"`
+	ID          string `json:"id"          bson:"_id"`
+	Name        string `json:"name"        bson:"-"`
+	PandalCount int    `json:"pandalCount" bson:"pandalCount"`
 }

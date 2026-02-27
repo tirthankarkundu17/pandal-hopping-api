@@ -16,7 +16,7 @@ type PandalRepository interface {
 	FindAll(ctx context.Context, filter bson.M) ([]models.Pandal, error)
 	FindByID(ctx context.Context, id primitive.ObjectID) (*models.Pandal, error)
 	Update(ctx context.Context, id primitive.ObjectID, update bson.M) (*mongo.UpdateResult, error)
-	AggregateDistricts(ctx context.Context) ([]models.District, error)
+	AggregateDistricts(ctx context.Context, country, state string) ([]models.District, error)
 }
 
 // pandalRepository implements the PandalRepository interface
@@ -86,9 +86,20 @@ func (r *pandalRepository) Update(ctx context.Context, id primitive.ObjectID, up
 }
 
 // AggregateDistricts groups approved pandals by district and returns counts
-func (r *pandalRepository) AggregateDistricts(ctx context.Context) ([]models.District, error) {
+func (r *pandalRepository) AggregateDistricts(ctx context.Context, country, state string) ([]models.District, error) {
+	matchStage := bson.M{
+		"status":   "approved",
+		"district": bson.M{"$ne": ""},
+	}
+	if country != "" {
+		matchStage["country"] = country
+	}
+	if state != "" {
+		matchStage["state"] = state
+	}
+
 	pipeline := mongo.Pipeline{
-		{{Key: "$match", Value: bson.M{"status": "approved", "district": bson.M{"$ne": ""}}}},
+		{{Key: "$match", Value: matchStage}},
 		{{Key: "$group", Value: bson.M{
 			"_id":         "$district",
 			"pandalCount": bson.M{"$sum": 1},
