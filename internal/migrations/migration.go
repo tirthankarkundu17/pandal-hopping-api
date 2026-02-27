@@ -11,31 +11,51 @@ import (
 )
 
 // RunMigrations executes all necessary index creations
-func RunMigrations(collection *mongo.Collection) {
+func RunMigrations(pandalCollection *mongo.Collection, foodStopCollection *mongo.Collection) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	log.Println("Running migrations...")
 
-	indexModels := []mongo.IndexModel{
+	// Pandal collection indexes
+	pandalIndexes := []mongo.IndexModel{
 		{
-			Keys: bson.M{
-				"location": "2dsphere",
-			},
+			Keys:    bson.M{"location": "2dsphere"},
 			Options: options.Index().SetName("location_2dsphere_index"),
 		},
 		{
-			Keys: bson.M{
-				"area": 1,
-			},
+			Keys:    bson.M{"area": 1},
 			Options: options.Index().SetName("area_index"),
+		},
+		{
+			Keys:    bson.M{"district": 1},
+			Options: options.Index().SetName("district_index"),
+		},
+		{
+			Keys:    bson.M{"tags": 1},
+			Options: options.Index().SetName("tags_index"),
 		},
 	}
 
-	indexNames, err := collection.Indexes().CreateMany(ctx, indexModels)
+	pandalIndexNames, err := pandalCollection.Indexes().CreateMany(ctx, pandalIndexes)
 	if err != nil {
-		log.Fatalf("Failed to create indexes: %v", err)
+		log.Fatalf("Failed to create pandal indexes: %v", err)
+	}
+	log.Printf("Pandal indexes created: %v", pandalIndexNames)
+
+	// Food stop collection indexes
+	foodIndexes := []mongo.IndexModel{
+		{
+			Keys:    bson.M{"location": "2dsphere"},
+			Options: options.Index().SetName("food_location_2dsphere_index"),
+		},
 	}
 
-	log.Printf("Migration successful: Created indexes %v\n", indexNames)
+	foodIndexNames, err := foodStopCollection.Indexes().CreateMany(ctx, foodIndexes)
+	if err != nil {
+		log.Fatalf("Failed to create food stop indexes: %v", err)
+	}
+	log.Printf("Food stop indexes created: %v", foodIndexNames)
+
+	log.Println("Migration complete.")
 }

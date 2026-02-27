@@ -45,9 +45,11 @@ func main() {
 	// Setup MongoDB Collections
 	pandalCollection := config.GetCollection(client, "durgapuja")
 	userCollection := config.GetCollection(client, "users")
+	routeCollection := config.GetCollection(client, "routes")
+	foodStopCollection := config.GetCollection(client, "food_stops")
 
 	// Run Database Migrations
-	migrations.RunMigrations(pandalCollection)
+	migrations.RunMigrations(pandalCollection, foodStopCollection)
 
 	// Initialize the dependency graph (Repository -> Service -> Handler)
 	pandalRepo := repository.NewPandalRepository(pandalCollection)
@@ -57,6 +59,14 @@ func main() {
 	userRepo := repository.NewUserRepository(userCollection)
 	authService := services.NewAuthService(userRepo)
 	authHandler := handlers.NewAuthHandler(authService)
+
+	routeRepo := repository.NewRouteRepository(routeCollection, pandalCollection)
+	routeService := services.NewRouteService(routeRepo)
+	routeHandler := handlers.NewRouteHandler(routeService)
+
+	foodStopRepo := repository.NewFoodStopRepository(foodStopCollection)
+	foodStopService := services.NewFoodStopService(foodStopRepo)
+	foodStopHandler := handlers.NewFoodStopHandler(foodStopService)
 
 	// Setup Gin router
 	router := gin.Default()
@@ -77,6 +87,8 @@ func main() {
 	// Setup routes
 	routes.PandalRoute(apiGroup, pandalHandler)
 	routes.AuthRoute(apiGroup, authHandler)
+	routes.RouteRoute(apiGroup, routeHandler)
+	routes.FoodRoute(apiGroup, foodStopHandler)
 
 	// Default response
 	router.GET("/", func(c *gin.Context) {

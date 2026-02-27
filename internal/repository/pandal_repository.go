@@ -16,6 +16,7 @@ type PandalRepository interface {
 	FindAll(ctx context.Context, filter bson.M) ([]models.Pandal, error)
 	FindByID(ctx context.Context, id primitive.ObjectID) (*models.Pandal, error)
 	Update(ctx context.Context, id primitive.ObjectID, update bson.M) (*mongo.UpdateResult, error)
+	AggregateDistricts(ctx context.Context) ([]models.District, error)
 }
 
 // pandalRepository implements the PandalRepository interface
@@ -82,4 +83,31 @@ func (r *pandalRepository) FindByID(ctx context.Context, id primitive.ObjectID) 
 // Update amends a pandal document by its ID
 func (r *pandalRepository) Update(ctx context.Context, id primitive.ObjectID, update bson.M) (*mongo.UpdateResult, error) {
 	return r.collection.UpdateOne(ctx, bson.M{"_id": id}, update)
+}
+
+// AggregateDistricts groups approved pandals by district and returns counts
+func (r *pandalRepository) AggregateDistricts(ctx context.Context) ([]models.District, error) {
+	pipeline := mongo.Pipeline{
+		{{Key: "$match", Value: bson.M{"status": "approved", "district": bson.M{"$ne": ""}}}},
+		{{Key: "$group", Value: bson.M{
+			"_id":         "$district",
+			"pandalCount": bson.M{"$sum": 1},
+		}}},
+		{{Key: "$sort", Value: bson.M{"pandalCount": -1}}},
+	}
+
+	cursor, err := r.collection.Aggregate(ctx, pipeline)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var districts []models.District
+	if err := cursor.All(ctx, &districts); err != nil {
+		return nil, err
+	}
+	if districts == nil {
+		districts = []models.District{}
+	}
+	return districts, nil
 }

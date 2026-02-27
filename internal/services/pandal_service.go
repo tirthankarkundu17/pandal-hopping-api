@@ -18,8 +18,9 @@ import (
 // PandalService defines the business logic interface
 type PandalService interface {
 	CreatePandal(ctx context.Context, pandal models.Pandal) (*mongo.InsertOneResult, error)
-	GetPandals(ctx context.Context, lng, lat, radius float64, hasCoords bool) ([]models.Pandal, error)
+	GetPandals(ctx context.Context, lng, lat, radius float64, hasCoords bool, tag, search string) ([]models.Pandal, error)
 	GetPendingPandals(ctx context.Context, lng, lat, radius float64, hasCoords bool) ([]models.Pandal, error)
+	GetDistricts(ctx context.Context) ([]models.District, error)
 	ApprovePandal(ctx context.Context, id primitive.ObjectID, approverID string) (*models.Pandal, error)
 }
 
@@ -53,7 +54,7 @@ func (s *pandalService) CreatePandal(ctx context.Context, pandal models.Pandal) 
 	return s.repo.Create(ctx, pandal)
 }
 
-func (s *pandalService) buildGeospatialFilter(status models.PandalStatus, lng, lat, radius float64, hasCoords bool) bson.M {
+func (s *pandalService) buildGeospatialFilter(status models.PandalStatus, lng, lat, radius float64, hasCoords bool, tag, search string) bson.M {
 	filter := bson.M{"status": status}
 
 	if hasCoords {
@@ -70,19 +71,39 @@ func (s *pandalService) buildGeospatialFilter(status models.PandalStatus, lng, l
 			},
 		}
 	}
+
+	// Tag filter — matches any pandal whose Tags array contains the given tag
+	if tag != "" {
+		filter["tags"] = bson.M{"$in": []string{tag}}
+	}
+
+	// Text search — case-insensitive regex across name, area, and district
+	if search != "" {
+		filter["$or"] = []bson.M{
+			{"name": bson.M{"$regex": search, "$options": "i"}},
+			{"area": bson.M{"$regex": search, "$options": "i"}},
+			{"district": bson.M{"$regex": search, "$options": "i"}},
+		}
+	}
+
 	return filter
 }
 
-// GetPandals returns only approved pandals
-func (s *pandalService) GetPandals(ctx context.Context, lng, lat, radius float64, hasCoords bool) ([]models.Pandal, error) {
-	filter := s.buildGeospatialFilter(models.StatusApproved, lng, lat, radius, hasCoords)
+// GetPandals returns only approved pandals, with optional tag and text search filters
+func (s *pandalService) GetPandals(ctx context.Context, lng, lat, radius float64, hasCoords bool, tag, search string) ([]models.Pandal, error) {
+	filter := s.buildGeospatialFilter(models.StatusApproved, lng, lat, radius, hasCoords, tag, search)
 	return s.repo.FindAll(ctx, filter)
 }
 
 // GetPendingPandals returns pandals waiting for approval
 func (s *pandalService) GetPendingPandals(ctx context.Context, lng, lat, radius float64, hasCoords bool) ([]models.Pandal, error) {
-	filter := s.buildGeospatialFilter(models.StatusPending, lng, lat, radius, hasCoords)
+	filter := s.buildGeospatialFilter(models.StatusPending, lng, lat, radius, hasCoords, "", "")
 	return s.repo.FindAll(ctx, filter)
+}
+
+// GetDistricts aggregates approved pandals grouped by district
+func (s *pandalService) GetDistricts(ctx context.Context) ([]models.District, error) {
+	return s.repo.AggregateDistricts(ctx)
 }
 
 // ApprovePandal increments the approval count and updates status to approved if consensus is met

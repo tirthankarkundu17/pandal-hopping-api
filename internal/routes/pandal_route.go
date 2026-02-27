@@ -14,6 +14,7 @@ func PandalRoute(router *gin.RouterGroup, handler *handlers.PandalHandler) {
 		pandalRoutes.POST("/", handler.CreatePandal())
 		pandalRoutes.GET("/", handler.GetAllPandals())
 		pandalRoutes.GET("/pending", handler.GetPendingPandals())
+		pandalRoutes.GET("/districts", handler.GetDistricts())
 		pandalRoutes.PUT("/:id/approve", handler.ApprovePandal())
 	}
 }
