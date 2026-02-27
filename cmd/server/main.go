@@ -17,6 +17,7 @@ import (
 	"tirthankarkundu17/pandal-hopping-api/internal/routes"
 	"tirthankarkundu17/pandal-hopping-api/internal/services"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
@@ -59,6 +60,16 @@ func main() {
 
 	// Setup Gin router
 	router := gin.Default()
+
+	// CORS — allow the Expo web dev server (and any origin in development)
+	router.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"*"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: false,
+		MaxAge:           12 * time.Hour,
+	}))
 
 	// API Route Group
 	apiGroup := router.Group("/api/v1")

@@ -19,6 +19,11 @@ A RESTful backend API for a **Durga Puja Pandal Hopping** application — helpin
   - [Pandal Endpoints](#pandal-endpoints)
 - [Data Models](#-data-models)
 - [Docker & Makefile](#-docker--makefile)
+- [Frontend (React Native)](#-frontend-react-native)
+  - [Tech Stack](#frontend-tech-stack)
+  - [Directory Structure](#frontend-directory-structure)
+  - [Screens](#screens)
+  - [Running the App](#running-the-app)
 - [Contributing](#-contributing)
 
 ---
@@ -292,6 +297,93 @@ The final image is built from `scratch` (zero-OS base) for a minimal attack surf
 ```bash
 docker pull tirthankark/pandal-hopping-api:latest
 ```
+
+---
+
+## 📱 Frontend (React Native)
+
+A full-featured React Native (Expo) frontend lives inside the `frontend/` directory. It consumes every API endpoint and ships a rich, festival-themed dark UI.
+
+### Frontend Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Framework | [Expo](https://expo.dev) (blank TypeScript template) |
+| Navigation | React Navigation v7 (bottom tabs + native stack) |
+| HTTP Client | Axios with JWT interceptor + auto-refresh |
+| Auth Storage | `expo-secure-store` |
+| UI / Icons | `expo-linear-gradient`, `@expo/vector-icons` (Ionicons) |
+| Safe Area | `react-native-safe-area-context` |
+
+### Frontend Directory Structure
+
+```
+frontend/
+├── App.tsx                          # Root: SafeAreaProvider + AuthProvider + Navigator
+└── src/
+    ├── api/
+    │   ├── client.ts                # Axios instance, JWT attach + auto-refresh interceptor
+    │   ├── auth.ts                  # register / login / logout / isAuthenticated
+    │   └── pandals.ts               # listApproved / listPending / createPandal / approvePandal
+    ├── context/
+    │   └── AuthContext.tsx          # Global auth state (isAuthenticated, login, register, logout)
+    ├── theme/
+    │   └── index.ts                 # Design tokens — colors, fonts, spacing, radii, shadows
+    ├── components/
+    │   ├── Button.tsx               # Gradient / outline / ghost / danger variants
+    │   ├── Input.tsx                # Labelled input with icon slots and error display
+    │   ├── PandalCard.tsx           # Festival card with image, status badge, stats, approve btn
+    │   └── common.tsx               # LoadingOverlay, EmptyState, ScreenHeader
+    ├── screens/
+    │   ├── AuthScreens.tsx          # Login + Register screens
+    │   ├── HomeScreen.tsx           # Approved pandals feed (pull-to-refresh)
+    │   ├── PendingScreen.tsx        # Pending pandals list + approve action
+    │   ├── CreatePandalScreen.tsx   # Submit new pandal form
+    │   ├── PandalDetailScreen.tsx   # Full pandal detail view with stats & CTA
+    │   └── ProfileScreen.tsx        # App info + Sign Out
+    └── navigation/
+        └── RootNavigator.tsx        # Auth-gated bottom tab + nested stack navigators
+```
+
+### Screens
+
+| Screen | API Endpoint(s) Used | Description |
+|---|---|---|
+| **Login** | `POST /auth/login` | Sign in with email & password, stores JWT tokens |
+| **Register** | `POST /auth/register` | Create account, then auto-logs in |
+| **Home** | `GET /pandals/` | Browse all approved pandals |
+| **Pending** | `GET /pandals/pending`, `PUT /pandals/:id/approve` | Review & approve pending pandals |
+| **Create Pandal** | `POST /pandals/` | Submit a new pandal (name, area, theme, description, image URL, coordinates) |
+| **Pandal Detail** | `PUT /pandals/:id/approve` | Full pandal info with approve CTA |
+| **Profile** | — | App info + sign out |
+
+The JWT access token is automatically attached to every request, and silently refreshed via `POST /auth/refresh` on any `401` response.
+
+### Running the App
+
+```bash
+cd frontend
+
+# Install dependencies (if not already done)
+npm install
+
+# Start Expo dev server — scan QR with the Expo Go app
+npm start
+
+# Android emulator
+npm run android
+
+# iOS simulator (macOS only)
+npm run ios
+
+# Web
+npm run web
+```
+
+> **Note on API URL:**
+> The default `BASE_URL` in `src/api/client.ts` points to `http://localhost:8080/api/v1`.
+> - **Android emulator**: use `http://10.0.2.2:8080/api/v1`
+> - **Physical device**: use your machine's LAN IP, e.g. `http://192.168.x.x:8080/api/v1`
 
 ---
 
