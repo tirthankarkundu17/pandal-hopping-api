@@ -18,7 +18,7 @@ import (
 // PandalService defines the business logic interface
 type PandalService interface {
 	CreatePandal(ctx context.Context, pandal models.Pandal) (*mongo.InsertOneResult, error)
-	GetPandals(ctx context.Context, lng, lat, radius float64, hasCoords bool, tag, search string) ([]models.Pandal, error)
+	GetPandals(ctx context.Context, lng, lat, radius float64, hasCoords bool, tag, search, district string) ([]models.Pandal, error)
 	GetPendingPandals(ctx context.Context, lng, lat, radius float64, hasCoords bool, excludeUserID string) ([]models.Pandal, error)
 	GetDistricts(ctx context.Context) ([]models.District, error)
 	ApprovePandal(ctx context.Context, id primitive.ObjectID, approverID string) (*models.Pandal, error)
@@ -54,7 +54,7 @@ func (s *pandalService) CreatePandal(ctx context.Context, pandal models.Pandal) 
 	return s.repo.Create(ctx, pandal)
 }
 
-func (s *pandalService) buildGeospatialFilter(status models.PandalStatus, lng, lat, radius float64, hasCoords bool, tag, search string) bson.M {
+func (s *pandalService) buildGeospatialFilter(status models.PandalStatus, lng, lat, radius float64, hasCoords bool, tag, search, district string) bson.M {
 	filter := bson.M{"status": status}
 
 	if hasCoords {
@@ -86,18 +86,23 @@ func (s *pandalService) buildGeospatialFilter(status models.PandalStatus, lng, l
 		}
 	}
 
+	// Exact match district filter
+	if district != "" {
+		filter["district"] = district
+	}
+
 	return filter
 }
 
 // GetPandals returns only approved pandals, with optional tag and text search filters
-func (s *pandalService) GetPandals(ctx context.Context, lng, lat, radius float64, hasCoords bool, tag, search string) ([]models.Pandal, error) {
-	filter := s.buildGeospatialFilter(models.StatusApproved, lng, lat, radius, hasCoords, tag, search)
+func (s *pandalService) GetPandals(ctx context.Context, lng, lat, radius float64, hasCoords bool, tag, search, district string) ([]models.Pandal, error) {
+	filter := s.buildGeospatialFilter(models.StatusApproved, lng, lat, radius, hasCoords, tag, search, district)
 	return s.repo.FindAll(ctx, filter)
 }
 
 // GetPendingPandals returns pandals waiting for approval
 func (s *pandalService) GetPendingPandals(ctx context.Context, lng, lat, radius float64, hasCoords bool, excludeUserID string) ([]models.Pandal, error) {
-	filter := s.buildGeospatialFilter(models.StatusPending, lng, lat, radius, hasCoords, "", "")
+	filter := s.buildGeospatialFilter(models.StatusPending, lng, lat, radius, hasCoords, "", "", "")
 
 	if excludeUserID != "" {
 		filter["createdBy"] = bson.M{"$ne": excludeUserID}

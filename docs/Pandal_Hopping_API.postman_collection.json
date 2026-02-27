@@ -149,6 +149,12 @@
 									"value": "north",
 									"description": "Text search query",
 									"disabled": true
+								},
+								{
+									"key": "district",
+									"value": "KOL",
+									"description": "Exact match filter for district code",
+									"disabled": true
 								}
 							]
 						}

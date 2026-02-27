@@ -70,6 +70,7 @@ func (h *PandalHandler) GetAllPandals() gin.HandlerFunc {
 		radiusStr := c.Query("radius")
 		tag := c.Query("tag")
 		search := c.Query("q")
+		district := c.Query("district")
 
 		var hasCoords bool
 		var lng, lat, radius float64
@@ -97,7 +98,7 @@ func (h *PandalHandler) GetAllPandals() gin.HandlerFunc {
 			return
 		}
 
-		pandals, err := h.service.GetPandals(ctx, lng, lat, radius, hasCoords, tag, search)
+		pandals, err := h.service.GetPandals(ctx, lng, lat, radius, hasCoords, tag, search, district)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
