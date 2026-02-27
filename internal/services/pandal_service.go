@@ -124,10 +124,12 @@ func (s *pandalService) GetDistricts(ctx context.Context, country, state string)
 		return nil, err
 	}
 
-	// Resolve human-readable district names from their codes
+	// Resolve human-readable district names and images from their codes
 	for i := range districts {
 		name := validation.GetDistrictName(country, state, districts[i].ID)
+		image := validation.GetDistrictImage(country, state, districts[i].ID)
 		districts[i].Name = name
+		districts[i].Image = image
 	}
 
 	return districts, nil

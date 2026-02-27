@@ -20,4 +20,5 @@ type District struct {
 	ID          string `json:"id"          bson:"_id"`
 	Name        string `json:"name"        bson:"-"`
 	PandalCount int    `json:"pandalCount" bson:"pandalCount"`
+	Image       string `json:"image,omitempty" bson:"-"`
 }

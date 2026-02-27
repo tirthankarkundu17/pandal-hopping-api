@@ -14,31 +14,156 @@
       "census_code": "19",
       "is_active": true,
       "districts": [
-        { "code": "ALP", "name": "Alipurduar", "is_active": true },
-        { "code": "BNK", "name": "Bankura", "is_active": true },
-        { "code": "BIR", "name": "Birbhum", "is_active": true },
-        { "code": "COB", "name": "Cooch Behar", "is_active": true },
-        { "code": "DDN", "name": "Dakshin Dinajpur", "is_active": true },
-        { "code": "DAR", "name": "Darjeeling", "is_active": true },
-        { "code": "HGL", "name": "Hooghly", "is_active": true },
-        { "code": "HWH", "name": "Howrah", "is_active": true },
-        { "code": "JAL", "name": "Jalpaiguri", "is_active": true },
-        { "code": "JHA", "name": "Jhargram", "is_active": true },
-        { "code": "KAL", "name": "Kalimpong", "is_active": true },
-        { "code": "KOL", "name": "Kolkata", "is_active": true },
-        { "code": "MLD", "name": "Malda", "is_active": true },
-        { "code": "MUR", "name": "Murshidabad", "is_active": true },
-        { "code": "NAD", "name": "Nadia", "is_active": true },
-        { "code": "PNB", "name": "North 24 Parganas", "is_active": true },
-        { "code": "PSM", "name": "Paschim Medinipur", "is_active": true },
-        { "code": "PRB", "name": "Purba Bardhaman", "is_active": true },
-        { "code": "PRM", "name": "Purba Medinipur", "is_active": true },
-        { "code": "PRL", "name": "Purulia", "is_active": true },
-        { "code": "RNB", "name": "Ranaghat", "is_active": true },
-        { "code": "SLG", "name": "Siliguri", "is_active": true },
-        { "code": "S24", "name": "South 24 Parganas", "is_active": true },
-        { "code": "UBD", "name": "Uttar Dinajpur", "is_active": true },
-        { "code": "WBD", "name": "West Bardhaman", "is_active": true }
+        {
+          "code": "ALP",
+          "name": "Alipurduar",
+          "is_active": true,
+          "image": "https://upload.wikimedia.org/wikipedia/commons/1/15/EveningAtJaldapara.JPG"
+        },
+        {
+          "code": "BNK",
+          "name": "Bankura",
+          "is_active": true,
+          "image": "https://upload.wikimedia.org/wikipedia/commons/5/52/Ras_Mancha_03.jpg"
+        },
+        {
+          "code": "BIR",
+          "name": "Birbhum",
+          "is_active": true,
+          "image": "https://upload.wikimedia.org/wikipedia/commons/4/43/Tarapith_Temple_05.jpg"
+        },
+        {
+          "code": "COB",
+          "name": "Cooch Behar",
+          "is_active": true,
+          "image": "https://upload.wikimedia.org/wikipedia/commons/1/14/Front_view_of_Cooch_Behar_Palace%2C_WB%2C_IN_14.jpg"
+        },
+        {
+          "code": "DDN",
+          "name": "Dakshin Dinajpur",
+          "is_active": true,
+          "image": "https://upload.wikimedia.org/wikipedia/commons/1/10/Dargah_of_Shah_Ata_situated_in_Gangarampur_in_Dakshin_Dinajpur_district_13.jpg"
+        },
+        {
+          "code": "DAR",
+          "name": "Darjeeling",
+          "is_active": true,
+          "image": "https://upload.wikimedia.org/wikipedia/commons/2/25/Tea_Estate%2C_Darjeeling.jpg"
+        },
+        {
+          "code": "HGL",
+          "name": "Hooghly",
+          "is_active": true,
+          "image": "https://upload.wikimedia.org/wikipedia/commons/7/7e/Shiva_Durga_temple_or_simply%2C_Durga_temple_of_Bally_Diwanganj_of_Goghat_PS_in_Hooghly_district_of_West_Bengal_%2806%29.jpg"
+        },
+        {
+          "code": "HWH",
+          "name": "Howrah",
+          "is_active": true,
+          "image": "https://upload.wikimedia.org/wikipedia/commons/8/84/Belur_Math_-_Ramakrishna_Math_and_around%2C_Howrah%2C_Kolkata-_IRCTC_2017_%2820%29.jpg"
+        },
+        {
+          "code": "JAL",
+          "name": "Jalpaiguri",
+          "is_active": true,
+          "image": "https://upload.wikimedia.org/wikipedia/commons/9/9f/Gorumara_Neora_Tea_Estate_Arnab_Dutta.JPG"
+        },
+        {
+          "code": "JHA",
+          "name": "Jhargram",
+          "is_active": true,
+          "image": "https://upload.wikimedia.org/wikipedia/commons/3/3e/A_click_from_a_top_of_the_hill....at_belpahari%2Cjhargram.jpg"
+        },
+        {
+          "code": "KAL",
+          "name": "Kalimpong",
+          "is_active": true,
+          "image": "https://upload.wikimedia.org/wikipedia/commons/5/51/Mangal_Dham_Temple_-_Kalimpong_%282%29.jpg"
+        },
+        {
+          "code": "KOL",
+          "name": "Kolkata",
+          "is_active": true,
+          "image": "https://upload.wikimedia.org/wikipedia/commons/d/d7/Kolkata_maidan.jpg"
+        },
+        {
+          "code": "MLD",
+          "name": "Malda",
+          "is_active": true,
+          "image": "https://upload.wikimedia.org/wikipedia/commons/5/50/Baraduari_Mosque_alias_Barasona_Mosque_at_Gaur_05.jpg"
+        },
+        {
+          "code": "MUR",
+          "name": "Murshidabad",
+          "is_active": true,
+          "image": "https://upload.wikimedia.org/wikipedia/commons/e/e5/Karnasubarana%2C_a_historical_place_of_Murshidabad_01.jpg"
+        },
+        {
+          "code": "NAD",
+          "name": "Nadia",
+          "is_active": true,
+          "image": "https://upload.wikimedia.org/wikipedia/commons/6/6f/Chandroday_mandir_uc_side_view.jpg"
+        },
+        {
+          "code": "PNB",
+          "name": "North 24 Parganas",
+          "is_active": true,
+          "image": "https://upload.wikimedia.org/wikipedia/commons/4/40/Mangal_Pandey_Park%2C_Barrackpore.jpg"
+        },
+        {
+          "code": "PSM",
+          "name": "Paschim Medinipur",
+          "is_active": true,
+          "image": "https://upload.wikimedia.org/wikipedia/commons/e/ec/NavratnaTempleComplex-Pathra-WestBengal-Fig1.jpg"
+        },
+        {
+          "code": "PRB",
+          "name": "Purba Bardhaman",
+          "is_active": true,
+          "image": "https://upload.wikimedia.org/wikipedia/commons/f/f5/108_Shiva_Temple_at_Nababhat_area_of_Bardhaman_Town_at_Purba_Bardhaman_district_in_West_Bengal_07.jpg"
+        },
+        {
+          "code": "PRM",
+          "name": "Purba Medinipur",
+          "is_active": true,
+          "image": "https://upload.wikimedia.org/wikipedia/commons/4/46/Bankim_Chandra_Chattopadhyay_Memorial_-_Dariapur_-_East_Midnapore_2016-06-18_4348.JPG"
+        },
+        {
+          "code": "PRL",
+          "name": "Purulia",
+          "is_active": true,
+          "image": "https://upload.wikimedia.org/wikipedia/commons/2/29/Joychandi_Pahar_%2814694282039%29.jpg"
+        },
+        {
+          "code": "RNB",
+          "name": "Ranaghat",
+          "is_active": true,
+          "image": "https://upload.wikimedia.org/wikipedia/commons/b/bd/Ranaghat_Junction_railway_station_05.jpg"
+        },
+        {
+          "code": "SLG",
+          "name": "Siliguri",
+          "is_active": true,
+          "image": "https://upload.wikimedia.org/wikipedia/commons/e/e0/Siliguri_view_3.jpg"
+        },
+        {
+          "code": "S24",
+          "name": "South 24 Parganas",
+          "is_active": true,
+          "image": "https://upload.wikimedia.org/wikipedia/commons/4/4b/Sundarban_Tiger.jpg"
+        },
+        {
+          "code": "UBD",
+          "name": "Uttar Dinajpur",
+          "is_active": true,
+          "image": "https://upload.wikimedia.org/wikipedia/commons/4/43/Durgapur_Zamindar_house_at_Uttar_Dinajpur_district_11.jpg"
+        },
+        {
+          "code": "WBD",
+          "name": "West Bardhaman",
+          "is_active": true,
+          "image": "https://upload.wikimedia.org/wikipedia/commons/c/cf/Asansol_rail_station_in_Asansol_04.jpg"
+        }
       ]
     }
   ]

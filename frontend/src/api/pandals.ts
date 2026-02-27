@@ -21,6 +21,13 @@ export interface Pandal {
   createdAt: string;
 }
 
+export interface District {
+  id: string;
+  name: string;
+  pandalCount: number;
+  image?: string;
+}
+
 export interface CreatePandalInput {
   name: string;
   area: string;
@@ -47,6 +54,11 @@ export const pandalApi = {
 
   createPandal: async (data: CreatePandalInput): Promise<Pandal> => {
     const res = await api.post<ApiResponse<Pandal>>('/pandals/', data);
+    return res.data.data;
+  },
+
+  listDistricts: async (): Promise<District[]> => {
+    const res = await api.get<ApiResponse<District[]>>('/pandals/districts');
     return res.data.data;
   },
 

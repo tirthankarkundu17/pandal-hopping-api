@@ -10,6 +10,7 @@ type AdminDistrict struct {
 	Code     string `json:"code"`
 	Name     string `json:"name"`
 	IsActive bool   `json:"is_active"`
+	Image    string `json:"image,omitempty"`
 }
 
 type AdminState struct {
@@ -134,4 +135,25 @@ func GetDistrictName(countryCode, stateCode, districtCode string) string {
 	}
 
 	return districtCode
+}
+
+// GetDistrictImage looks up the image for a given country, state, and district code
+func GetDistrictImage(countryCode, stateCode, districtCode string) string {
+	if countryCode != "" && adminData.Country.Code != countryCode {
+		return ""
+	}
+
+	for _, state := range adminData.States {
+		if stateCode != "" && state.Code != stateCode {
+			continue
+		}
+
+		for _, district := range state.Districts {
+			if district.Code == districtCode {
+				return district.Image
+			}
+		}
+	}
+
+	return ""
 }

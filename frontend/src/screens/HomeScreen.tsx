@@ -16,6 +16,10 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { COLORS, FONTS, RADIUS, SPACING, SHADOWS } from '../theme';
+import dataService from '../services';
+import { Pandal, District } from '../api/pandals';
+import { FoodStop } from '../api/food';
+import { Route } from '../api/routes';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -29,74 +33,9 @@ const HIGHLIGHTS = [
     { id: '4', label: 'South Kolkata', icon: 'location-outline', lib: 'ion', grad: ['#F59E0B', '#D97706'] as [string, string] },
 ];
 
-// To be updated with API calls later
-const ROUTES = [
-    {
-        id: '1',
-        title: 'Lights of the City of Joy',
-        description: 'Chase the glow of Kolkata\'s most dazzling pandals as the city comes alive after dark…',
-        duration: '~4-5 Hours',
-        stops: 20,
-    },
-    {
-        id: '2',
-        title: 'Heritage & Grandeur Trail',
-        description: 'Walk through decades of tradition across the oldest and grandest community pujas…',
-        duration: '~3-5 Hours',
-        stops: 24,
-    },
-    {
-        id: '3',
-        title: 'The Artisan\'s Circuit',
-        description: 'A curated path through pandals celebrated for their breathtaking themes and craftsmanship…',
-        duration: '~2-3 Hours',
-        stops: 14,
-    },
-];
 
-// To be updated with API calls later - figure out the view as well
-const DISTRICTS = [
-    {
-        id: '1',
-        name: 'Kolkata',
-        landmark: 'Victoria Memorial',
-        image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTcF5ZAaQk9F1cLA_0c4LXC0GxI1cqD2u8V4A&s',
-    },
-    {
-        id: '2',
-        name: 'Howrah',
-        landmark: 'Howrah Bridge',
-        image: 'https://media.istockphoto.com/id/1164386039/photo/howrah-bridge-on-river-ganges-at-kolkata-at-twilight-with-moody-sky.jpg?s=612x612&w=0&k=20&c=CHrNWdInFSDyERdvgd0f8935hZcBQU6lbYCE4LlXqUY=',
-    },
-    {
-        id: '3',
-        name: '24 Parganas (N)',
-        landmark: 'Dakshineswar',
-        image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSOOXsExbdexjHIkg-RjtM3gYsEiR0ranQQyA&s',
-    },
-];
 
-// To be updated with API calls later
-const FOOD_STOPS = [
-    {
-        id: '1',
-        name: 'The Gazeboo',
-        type: 'Restaurant',
-        image: 'https://lh3.googleusercontent.com/p/AF1QipOTRXftYnkyVJW6ukQPaxSMCrQjG0HbyiJ04KV7=s680-w680-h510-rw',
-    },
-    {
-        id: '2',
-        name: 'Mocambo Restaurant and Bar',
-        type: 'Restaurant',
-        image: 'https://lh3.googleusercontent.com/gps-cs-s/AHVAweq4PcHFxmGW6h9MNGcS_f-tROrNYauUqOs1jC_qvHRyx-0_FtYC1_NoC9zmAbVL3Tge4D0WNGBxL65uy0vvbs9AxWFeGPwq-IR9bNspyIOy_fdjQy8kC4cMFkSLlULR-n0LbkMh9Q=s680-w680-h510-rw',
-    },
-    {
-        id: '3',
-        name: 'Oh! Calcutta',
-        type: 'Fine Dining',
-        image: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400&q=80',
-    },
-];
+
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -124,7 +63,7 @@ const HighlightPill = ({ item }: { item: typeof HIGHLIGHTS[0] }) => (
 );
 
 /** Journey ticket style route card */
-const RouteCard = ({ item, index }: { item: typeof ROUTES[0]; index: number }) => (
+const RouteCard = ({ item, index }: { item: Route; index: number }) => (
     <TouchableOpacity style={styles.routeTicket} activeOpacity={0.8}>
         {/* Left accent bar */}
         <LinearGradient
@@ -138,7 +77,7 @@ const RouteCard = ({ item, index }: { item: typeof ROUTES[0]; index: number }) =
                 <Text style={styles.ticketNumber}>Route {String(index + 1).padStart(2, '0')}</Text>
                 <View style={styles.ticketBadge}>
                     <Ionicons name="flag-outline" size={10} color={COLORS.primary} />
-                    <Text style={styles.ticketBadgeText}>{item.stops} stops</Text>
+                    <Text style={styles.ticketBadgeText}>{item.stopCount ?? item.stops?.length ?? 0} stops</Text>
                 </View>
             </View>
             <Text style={styles.routeTitle}>{item.title}</Text>
@@ -159,8 +98,21 @@ const RouteCard = ({ item, index }: { item: typeof ROUTES[0]; index: number }) =
 );
 
 /** Mosaic district layout: 1 tall featured + 2 stacked small */
-const DistrictMosaic = () => {
-    const [featured, ...rest] = DISTRICTS;
+const DistrictMosaic = ({ data }: { data: District[] }) => {
+    // We map over data to ensure fallback images exist if API doesn't provide them
+    const enrichedData = data.map((d) => {
+        return {
+            ...d,
+            landmark: `${d.pandalCount || 0} Pandals`,
+            image: d.image || 'https://placehold.co/600x400/1E0A3C/FFFFFF?text=' + encodeURIComponent(d.name),
+        };
+    });
+
+    if (!enrichedData || enrichedData.length === 0) return null;
+
+    const featured = enrichedData[0];
+    const rest = enrichedData.slice(1, 3);
+
     return (
         <View style={styles.mosaicRow}>
             {/* Left: featured tall card */}
@@ -177,8 +129,8 @@ const DistrictMosaic = () => {
             </TouchableOpacity>
             {/* Right: stacked smaller cards */}
             <View style={styles.mosaicStack}>
-                {rest.map((d) => (
-                    <TouchableOpacity key={d.id} style={styles.mosaicSmall} activeOpacity={0.85}>
+                {rest.map((d: any, i: number) => (
+                    <TouchableOpacity key={d.id || i} style={styles.mosaicSmall} activeOpacity={0.85}>
                         <Image source={{ uri: d.image }} style={styles.mosaicImage} />
                         <LinearGradient colors={['transparent', 'rgba(0,0,0,0.82)']} style={styles.mosaicGrad} />
                         <View style={styles.mosaicInfo}>
@@ -193,7 +145,7 @@ const DistrictMosaic = () => {
 };
 
 /** Food card: full-bleed image with gradient text overlay */
-const FoodCard = ({ item }: { item: typeof FOOD_STOPS[0] }) => (
+const FoodCard = ({ item }: { item: FoodStop }) => (
     <TouchableOpacity style={styles.foodCard} activeOpacity={0.85}>
         <Image source={{ uri: item.image }} style={styles.foodImage} />
         <LinearGradient
@@ -231,10 +183,37 @@ export const HomeScreen = ({ navigation }: any) => {
     const [refreshing, setRefreshing] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
 
-    const onRefresh = useCallback(() => {
-        setRefreshing(true);
-        setTimeout(() => setRefreshing(false), 1200);
+    // API Data
+    const [apiRoutes, setApiRoutes] = useState<Route[]>([]);
+    const [apiFood, setApiFood] = useState<FoodStop[]>([]);
+    const [apiDistricts, setApiDistricts] = useState<District[]>([]);
+    // If you want to use pandals, say for a new "Popular Pandals" map or slider:
+    // const [pandals, setPandals] = useState<Pandal[]>([]);
+
+    const loadData = useCallback(async () => {
+        try {
+            const [fetchedRoutes, fetchedFood, fetchedDistricts] = await Promise.all([
+                dataService.getRoutes(),
+                dataService.getFoodStops(),
+                dataService.getDistricts(),
+            ]);
+            setApiRoutes(fetchedRoutes);
+            setApiFood(fetchedFood);
+            setApiDistricts(fetchedDistricts);
+        } catch (error) {
+            console.error('Error fetching home data:', error);
+        }
     }, []);
+
+    React.useEffect(() => {
+        loadData();
+    }, [loadData]);
+
+    const onRefresh = useCallback(async () => {
+        setRefreshing(true);
+        await loadData();
+        setRefreshing(false);
+    }, [loadData]);
 
     return (
         <SafeAreaView style={styles.safe}>
@@ -327,7 +306,7 @@ export const HomeScreen = ({ navigation }: any) => {
                 <View style={styles.section}>
                     <SectionHeader title="Curated Pujo Routes" onSeeAll={() => navigation.getParent()?.navigate('Route')} />
                     <FlatList
-                        data={ROUTES}
+                        data={apiRoutes}
                         keyExtractor={(item) => item.id}
                         renderItem={({ item, index }) => <RouteCard item={item} index={index} />}
                         horizontal
@@ -340,7 +319,7 @@ export const HomeScreen = ({ navigation }: any) => {
                 <View style={styles.section}>
                     <SectionHeader title="Explore by District" onSeeAll={() => { }} />
                     <View style={styles.mosaicWrapper}>
-                        <DistrictMosaic />
+                        <DistrictMosaic data={apiDistricts} />
                     </View>
                 </View>
 
@@ -348,7 +327,7 @@ export const HomeScreen = ({ navigation }: any) => {
                 <View style={[styles.section, { marginBottom: 32 }]}>
                     <SectionHeader title="Food Stops Near You" onSeeAll={() => navigation.getParent()?.navigate('Food')} />
                     <FlatList
-                        data={FOOD_STOPS}
+                        data={apiFood}
                         keyExtractor={(item) => item.id}
                         renderItem={({ item }) => <FoodCard item={item} />}
                         horizontal
