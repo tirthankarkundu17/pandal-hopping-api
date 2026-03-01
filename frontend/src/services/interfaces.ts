@@ -5,6 +5,6 @@ import { Pandal, District } from '../api/pandals';
 export interface IDataService {
     getRoutes(): Promise<Route[]>;
     getFoodStops(): Promise<FoodStop[]>;
-    getPandals(): Promise<Pandal[]>;
+    getPandals(params?: { lng?: number; lat?: number; radius?: number }): Promise<Pandal[]>;
     getDistricts(): Promise<District[]>;
 }

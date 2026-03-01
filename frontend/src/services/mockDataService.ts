@@ -17,7 +17,7 @@ export class MockDataService implements IDataService {
         });
     }
 
-    async getPandals(): Promise<Pandal[]> {
+    async getPandals(params?: { lng?: number; lat?: number; radius?: number }): Promise<Pandal[]> {
         return new Promise((resolve) => {
             setTimeout(() => resolve(MOCK_PANDALS), 500);
         });

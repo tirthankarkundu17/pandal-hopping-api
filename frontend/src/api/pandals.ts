@@ -10,7 +10,11 @@ export interface Pandal {
   name: string;
   description: string;
   area: string;
+  district: string;
+  state: string;
+  country: string;
   theme: string;
+  tags: string[];
   location: Location;
   images: string[];
   ratingAvg: number;
@@ -18,6 +22,7 @@ export interface Pandal {
   status: 'pending' | 'approved' | 'rejected';
   approvalCount: number;
   approvedBy: string[];
+  createdBy: string;
   createdAt: string;
 }
 
@@ -31,8 +36,12 @@ export interface District {
 export interface CreatePandalInput {
   name: string;
   area: string;
+  district: string;
+  state: string;
+  country: string;
   description?: string;
   theme?: string;
+  tags?: string[];
   location: Location;
   images?: string[];
 }
@@ -42,8 +51,12 @@ interface ApiResponse<T> {
 }
 
 export const pandalApi = {
-  listApproved: async (): Promise<Pandal[]> => {
-    const res = await api.get<ApiResponse<Pandal[]>>('/pandals/');
+  listApproved: async (params?: { lng?: number; lat?: number; radius?: number }): Promise<Pandal[]> => {
+    let url = '/pandals/';
+    if (params && params.lng !== undefined && params.lat !== undefined && params.radius !== undefined) {
+      url += `?lng=${params.lng}&lat=${params.lat}&radius=${params.radius}`;
+    }
+    const res = await api.get<ApiResponse<Pandal[]>>(url);
     return res.data.data;
   },
 

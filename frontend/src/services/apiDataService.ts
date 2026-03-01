@@ -12,8 +12,8 @@ export class ApiDataService implements IDataService {
         return foodApi.listFoodStops();
     }
 
-    async getPandals(): Promise<Pandal[]> {
-        return pandalApi.listApproved();
+    async getPandals(params?: { lng?: number; lat?: number; radius?: number }): Promise<Pandal[]> {
+        return pandalApi.listApproved(params);
     }
 
     async getDistricts(): Promise<District[]> {

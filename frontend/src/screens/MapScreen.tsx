@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, Image, Linking } from 'react-native';
 import MapView, { Marker, Callout } from 'react-native-maps';
-import { Ionicons } from '@expo/vector-icons';
+import * as Location from 'expo-location';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { COLORS, FONTS, SPACING, RADIUS, SHADOWS } from '../theme';
 import dataService from '../services';
 import { Pandal } from '../api/pandals';
@@ -10,11 +11,19 @@ export function MapScreen() {
     const [pandals, setPandals] = useState<Pandal[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedPandal, setSelectedPandal] = useState<Pandal | null>(null);
+    const [currentLocation, setCurrentLocation] = useState<Location.LocationObject | null>(null);
+    const [initialRegion, setInitialRegion] = useState<{ latitude: number; longitude: number; latitudeDelta: number; longitudeDelta: number } | null>(null);
+    const mapRef = React.useRef<MapView>(null);
 
-    const loadPandals = useCallback(async () => {
+    const loadPandals = useCallback(async (loc?: Location.LocationObject) => {
         try {
             setLoading(true);
-            const data = await dataService.getPandals();
+            const params = loc ? {
+                lng: loc.coords.longitude,
+                lat: loc.coords.latitude,
+                radius: 5000
+            } : undefined;
+            const data = await dataService.getPandals(params);
             setPandals(data);
         } catch (error) {
             console.error('Error fetching map pandals:', error);
@@ -24,49 +33,119 @@ export function MapScreen() {
     }, []);
 
     useEffect(() => {
-        loadPandals();
+        (async () => {
+            try {
+                const { status } = await Location.requestForegroundPermissionsAsync();
+                if (status !== 'granted') {
+                    setInitialRegion({
+                        latitude: 22.5726,
+                        longitude: 88.3639,
+                        latitudeDelta: 0.05,
+                        longitudeDelta: 0.05,
+                    });
+                    loadPandals();
+                    return;
+                }
+                const loc = await Location.getCurrentPositionAsync({});
+                setCurrentLocation(loc);
+                setInitialRegion({
+                    latitude: loc.coords.latitude,
+                    longitude: loc.coords.longitude,
+                    latitudeDelta: 0.05,
+                    longitudeDelta: 0.05,
+                });
+                loadPandals(loc);
+            } catch (error) {
+                console.error('Error getting location', error);
+                setInitialRegion({
+                    latitude: 22.5726,
+                    longitude: 88.3639,
+                    latitudeDelta: 0.05,
+                    longitudeDelta: 0.05,
+                });
+                loadPandals();
+            }
+        })();
     }, [loadPandals]);
 
-    const initialRegion = {
-        latitude: 22.5726,
-        longitude: 88.3639,
-        latitudeDelta: 0.1,
-        longitudeDelta: 0.1,
-    };
+    const goToMyLocation = useCallback(async () => {
+        try {
+            const { status } = await Location.requestForegroundPermissionsAsync();
+            if (status !== 'granted') return;
+
+            const loc = await Location.getCurrentPositionAsync({});
+            setCurrentLocation(loc);
+            mapRef.current?.animateToRegion({
+                latitude: loc.coords.latitude,
+                longitude: loc.coords.longitude,
+                latitudeDelta: 0.05,
+                longitudeDelta: 0.05,
+            }, 1000);
+        } catch (error) {
+            console.error('Error getting location', error);
+        }
+    }, []);
 
     return (
         <View style={styles.container}>
-            <MapView
-                style={styles.map}
-                initialRegion={initialRegion}
-            >
-                {pandals.map((p) => {
-                    const coords = p.location?.coordinates;
-                    if (!coords || coords.length !== 2) return null;
-
-                    return (
+            {initialRegion ? (
+                <MapView
+                    ref={mapRef}
+                    style={styles.map}
+                    initialRegion={initialRegion}
+                >
+                    {currentLocation && (
                         <Marker
-                            key={p.id}
                             coordinate={{
-                                latitude: coords[1], // GeoJSON is [lng, lat]
-                                longitude: coords[0]
+                                latitude: currentLocation.coords.latitude,
+                                longitude: currentLocation.coords.longitude,
                             }}
-                            onPress={() => setSelectedPandal(p)}
+                            title="You are here"
+                            zIndex={999}
                         >
-                            <View style={styles.markerContainer}>
-                                <Ionicons name="location" size={32} color={COLORS.primary} />
+                            <View style={styles.currentLocationMarker}>
+                                <View style={styles.currentLocationDot} />
                             </View>
-                            <Callout tooltip>
-                                <View style={styles.calloutContainer}>
-                                    <Text style={styles.calloutTitle}>{p.name}</Text>
-                                    <Text style={styles.calloutSubtitle}>{p.area}</Text>
-                                    <Text style={styles.calloutHint}>Tap below for details</Text>
-                                </View>
-                            </Callout>
                         </Marker>
-                    );
-                })}
-            </MapView>
+                    )}
+                    {pandals.map((p) => {
+                        const coords = p.location?.coordinates;
+                        if (!coords || coords.length !== 2) return null;
+
+                        return (
+                            <Marker
+                                key={p.id}
+                                coordinate={{
+                                    latitude: coords[1], // GeoJSON is [lng, lat]
+                                    longitude: coords[0]
+                                }}
+                                onPress={() => setSelectedPandal(p)}
+                            >
+                                <View style={styles.pandalPin}>
+                                    <View style={styles.pandalIconContainer}>
+                                        <MaterialCommunityIcons name="temple-hindu" size={18} color="#FFF" />
+                                    </View>
+                                </View>
+                                <Callout tooltip>
+                                    <View style={styles.calloutContainer}>
+                                        <Text style={styles.calloutTitle}>{p.name}</Text>
+                                        <Text style={styles.calloutSubtitle}>{p.area}</Text>
+                                        <Text style={styles.calloutHint}>Tap below for details</Text>
+                                    </View>
+                                </Callout>
+                            </Marker>
+                        );
+                    })}
+                </MapView>
+            ) : null}
+
+            <TouchableOpacity
+                style={styles.myLocationButton}
+                onPress={goToMyLocation}
+                activeOpacity={0.8}
+            >
+                <Ionicons name="navigate" size={24} color={COLORS.primary} />
+            </TouchableOpacity>
 
             {loading && (
                 <View style={styles.loadingContainer}>
@@ -88,6 +167,21 @@ export function MapScreen() {
                         <View style={styles.cardInfo}>
                             <Text style={styles.cardTitle} numberOfLines={1}>{selectedPandal.name}</Text>
                             <Text style={styles.cardSubtitle} numberOfLines={1}>{selectedPandal.area}</Text>
+                            {selectedPandal.description ? (
+                                <Text style={styles.cardDescription} numberOfLines={2}>{selectedPandal.description}</Text>
+                            ) : null}
+                            <TouchableOpacity
+                                style={styles.directionBtn}
+                                onPress={() => {
+                                    const coords = selectedPandal.location?.coordinates;
+                                    if (coords && coords.length === 2) {
+                                        Linking.openURL(`https://www.google.com/maps/dir/?api=1&destination=${coords[1]},${coords[0]}`);
+                                    }
+                                }}
+                            >
+                                <Ionicons name="navigate" size={14} color="#FFF" />
+                                <Text style={styles.directionBtnText}>Get Direction</Text>
+                            </TouchableOpacity>
                         </View>
                         <TouchableOpacity
                             style={styles.closeBtn}
@@ -116,16 +210,44 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         backgroundColor: 'rgba(10, 4, 28, 0.4)',
     },
-    markerContainer: {
+    myLocationButton: {
+        position: 'absolute',
+        bottom: 120,
+        right: SPACING.md,
+        backgroundColor: COLORS.bgCard,
+        width: 50,
+        height: 50,
+        borderRadius: 25,
         alignItems: 'center',
         justifyContent: 'center',
-        width: 32,
-        height: 32,
-        shadowColor: "#000",
+        ...SHADOWS.card,
+        borderWidth: 1,
+        borderColor: COLORS.border,
+        zIndex: 10,
+    },
+    pandalPin: {
+        width: 38,
+        height: 38,
+        backgroundColor: COLORS.primary,
+        borderRadius: 19,
+        borderBottomRightRadius: 0,
+        transform: [{ rotate: '-45deg' }],
+        borderWidth: 2,
+        borderColor: '#FFF',
+        alignItems: 'center',
+        justifyContent: 'center',
+        elevation: 5,
+        shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.25,
         shadowRadius: 3.84,
-        elevation: 5,
+    },
+    pandalIconContainer: {
+        transform: [{ rotate: '45deg' }],
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginLeft: 2, // visual compensation for tear-drop rotation centering
+        marginTop: 2,
     },
     calloutContainer: {
         backgroundColor: COLORS.bgCard,
@@ -195,7 +317,45 @@ const styles = StyleSheet.create({
         fontSize: FONTS.sizes.sm,
         color: COLORS.textSecondary,
     },
+    cardDescription: {
+        fontSize: FONTS.sizes.xs,
+        color: COLORS.textSecondary,
+        marginTop: 2,
+        lineHeight: 16,
+    },
+    directionBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: COLORS.primary,
+        paddingHorizontal: SPACING.sm,
+        paddingVertical: 6,
+        borderRadius: RADIUS.sm,
+        marginTop: SPACING.sm,
+        alignSelf: 'flex-start',
+    },
+    directionBtnText: {
+        color: '#FFF',
+        fontSize: FONTS.sizes.xs,
+        fontWeight: 'bold',
+        marginLeft: 4,
+    },
     closeBtn: {
         padding: SPACING.sm,
+    },
+    currentLocationMarker: {
+        width: 24,
+        height: 24,
+        borderRadius: 12,
+        backgroundColor: 'rgba(0, 122, 255, 0.3)',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    currentLocationDot: {
+        width: 12,
+        height: 12,
+        borderRadius: 6,
+        backgroundColor: '#007AFF',
+        borderWidth: 2,
+        borderColor: '#fff',
     }
 });
