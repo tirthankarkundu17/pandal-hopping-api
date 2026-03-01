@@ -39,6 +39,9 @@ COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 # Copy the statically-linked binary
 COPY --from=builder /build/server /server
 
+# Copy data directory required by the server
+COPY --from=builder /build/internal/data/india-administrative.json /internal/data/india-administrative.json
+
 # Expose the default port (override via PORT env var at runtime)
 EXPOSE 8080
 
