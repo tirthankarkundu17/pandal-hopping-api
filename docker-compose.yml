@@ -1,0 +1,24 @@
+version: "3.8"
+
+services:
+  # The load balancer (Nginx) that will route traffic to any available backend instance
+  proxy:
+    image: nginx:alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - backend
+
+  # Your Go backend application
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    env_file:
+      - ./backend/.env
+    expose:
+      - "8080"
+    deploy:
+      replicas: 3
