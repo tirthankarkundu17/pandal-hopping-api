@@ -30,7 +30,10 @@ RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} \
 # =============================================================================
 # Stage 2: Final minimal image
 # =============================================================================
-FROM scratch
+FROM alpine:latest
+
+# Install curl for healthchecks
+RUN apk add --no-cache curl
 
 # Copy timezone data and CA certs from the builder so HTTPS + time zones work
 COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
@@ -49,5 +52,9 @@ USER 65534:65534
 # Pass all real secrets / connection strings via --env-file or -e flags at runtime.
 ENV HOST=0.0.0.0 \
     PORT=8080
+
+# Add healthcheck to poll the server for liveness using curl
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8080/health || exit 1
 
 ENTRYPOINT ["/server"]
