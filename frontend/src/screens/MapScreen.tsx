@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, Image, Linking } from 'react-native';
 import MapView, { Marker, Callout } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -167,6 +167,21 @@ export function MapScreen() {
                         <View style={styles.cardInfo}>
                             <Text style={styles.cardTitle} numberOfLines={1}>{selectedPandal.name}</Text>
                             <Text style={styles.cardSubtitle} numberOfLines={1}>{selectedPandal.area}</Text>
+                            {selectedPandal.description ? (
+                                <Text style={styles.cardDescription} numberOfLines={2}>{selectedPandal.description}</Text>
+                            ) : null}
+                            <TouchableOpacity
+                                style={styles.directionBtn}
+                                onPress={() => {
+                                    const coords = selectedPandal.location?.coordinates;
+                                    if (coords && coords.length === 2) {
+                                        Linking.openURL(`https://www.google.com/maps/dir/?api=1&destination=${coords[1]},${coords[0]}`);
+                                    }
+                                }}
+                            >
+                                <Ionicons name="navigate" size={14} color="#FFF" />
+                                <Text style={styles.directionBtnText}>Get Direction</Text>
+                            </TouchableOpacity>
                         </View>
                         <TouchableOpacity
                             style={styles.closeBtn}
@@ -301,6 +316,28 @@ const styles = StyleSheet.create({
     cardSubtitle: {
         fontSize: FONTS.sizes.sm,
         color: COLORS.textSecondary,
+    },
+    cardDescription: {
+        fontSize: FONTS.sizes.xs,
+        color: COLORS.textSecondary,
+        marginTop: 2,
+        lineHeight: 16,
+    },
+    directionBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: COLORS.primary,
+        paddingHorizontal: SPACING.sm,
+        paddingVertical: 6,
+        borderRadius: RADIUS.sm,
+        marginTop: SPACING.sm,
+        alignSelf: 'flex-start',
+    },
+    directionBtnText: {
+        color: '#FFF',
+        fontSize: FONTS.sizes.xs,
+        fontWeight: 'bold',
+        marginLeft: 4,
     },
     closeBtn: {
         padding: SPACING.sm,
