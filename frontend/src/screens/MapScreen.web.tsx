@@ -1,10 +1,24 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, Image } from 'react-native';
-import MapView, { Marker, Callout } from 'react-native-maps';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS, SPACING, RADIUS, SHADOWS } from '../theme';
 import dataService from '../services';
 import { Pandal } from '../api/pandals';
+
+// Web specific imports
+import { MapContainer, TileLayer, Marker as LeafletMarker, Popup } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+
+// Fix for default Leaflet icon not loading in React correctly
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+
+// Ensure Leaflet fetches assets safely if Metro refuses to require them
+L.Icon.Default.mergeOptions({
+    iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+    iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+});
 
 export function MapScreen() {
     const [pandals, setPandals] = useState<Pandal[]>([]);
@@ -27,46 +41,42 @@ export function MapScreen() {
         loadPandals();
     }, [loadPandals]);
 
-    const initialRegion = {
-        latitude: 22.5726,
-        longitude: 88.3639,
-        latitudeDelta: 0.1,
-        longitudeDelta: 0.1,
-    };
-
     return (
         <View style={styles.container}>
-            <MapView
-                style={styles.map}
-                initialRegion={initialRegion}
-            >
-                {pandals.map((p) => {
-                    const coords = p.location?.coordinates;
-                    if (!coords || coords.length !== 2) return null;
+            <View style={StyleSheet.absoluteFill}>
+                <MapContainer
+                    center={[22.5726, 88.3639]}
+                    zoom={11}
+                    style={{ height: '100%', width: '100%' }}
+                >
+                    <TileLayer
+                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    />
 
-                    return (
-                        <Marker
-                            key={p.id}
-                            coordinate={{
-                                latitude: coords[1], // GeoJSON is [lng, lat]
-                                longitude: coords[0]
-                            }}
-                            onPress={() => setSelectedPandal(p)}
-                        >
-                            <View style={styles.markerContainer}>
-                                <Ionicons name="location" size={32} color={COLORS.primary} />
-                            </View>
-                            <Callout tooltip>
-                                <View style={styles.calloutContainer}>
-                                    <Text style={styles.calloutTitle}>{p.name}</Text>
-                                    <Text style={styles.calloutSubtitle}>{p.area}</Text>
-                                    <Text style={styles.calloutHint}>Tap below for details</Text>
-                                </View>
-                            </Callout>
-                        </Marker>
-                    );
-                })}
-            </MapView>
+                    {pandals.map((p) => {
+                        const coords = p.location?.coordinates;
+                        if (!coords || coords.length !== 2) return null;
+
+                        return (
+                            <LeafletMarker
+                                key={p.id}
+                                position={[coords[1], coords[0]]} // GeoJSON is [lng, lat], Leaflet is [lat, lng]
+                                eventHandlers={{
+                                    click: () => setSelectedPandal(p),
+                                }}
+                            >
+                                <Popup>
+                                    <View>
+                                        <Text style={{ fontWeight: 'bold', fontSize: 14 }}>{p.name}</Text>
+                                        <Text style={{ fontSize: 12, color: '#666' }}>{p.area}</Text>
+                                    </View>
+                                </Popup>
+                            </LeafletMarker>
+                        );
+                    })}
+                </MapContainer>
+            </View>
 
             {loading && (
                 <View style={styles.loadingContainer}>
@@ -74,9 +84,9 @@ export function MapScreen() {
                 </View>
             )}
 
-            {/* Selected Pandal Card Popup */}
+            {/* Selected Pandal Card Popup (overlaying map) */}
             {selectedPandal && (
-                <View style={styles.carouselContainer}>
+                <View style={[styles.carouselContainer, { zIndex: 1000 }]} pointerEvents="box-none">
                     <TouchableOpacity style={styles.card} activeOpacity={0.9}>
                         {selectedPandal.images?.[0] ? (
                             <Image source={{ uri: selectedPandal.images[0] }} style={styles.cardImage} />
@@ -107,49 +117,12 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: COLORS.bg,
     },
-    map: {
-        flex: 1,
-    },
     loadingContainer: {
         ...StyleSheet.absoluteFillObject,
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: 'rgba(10, 4, 28, 0.4)',
-    },
-    markerContainer: {
-        alignItems: 'center',
-        justifyContent: 'center',
-        width: 32,
-        height: 32,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.25,
-        shadowRadius: 3.84,
-        elevation: 5,
-    },
-    calloutContainer: {
-        backgroundColor: COLORS.bgCard,
-        borderRadius: RADIUS.md,
-        padding: SPACING.sm,
-        minWidth: 120,
-        borderColor: COLORS.border,
-        borderWidth: 1,
-    },
-    calloutTitle: {
-        fontSize: FONTS.sizes.sm,
-        fontWeight: 'bold',
-        color: COLORS.textPrimary,
-        marginBottom: 2,
-    },
-    calloutSubtitle: {
-        fontSize: FONTS.sizes.xs,
-        color: COLORS.textSecondary,
-    },
-    calloutHint: {
-        fontSize: 9,
-        color: COLORS.primary,
-        marginTop: 4,
-        fontStyle: 'italic',
+        zIndex: 2000,
     },
     carouselContainer: {
         position: 'absolute',
@@ -164,6 +137,7 @@ const styles = StyleSheet.create({
         borderRadius: RADIUS.lg,
         padding: SPACING.md,
         width: '90%',
+        maxWidth: 400,
         alignItems: 'center',
         borderWidth: 1,
         borderColor: COLORS.border,
