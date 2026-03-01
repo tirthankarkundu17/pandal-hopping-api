@@ -17,7 +17,7 @@
 
 # Docker Hub user and image name.
 # Override on the command line:  make build DOCKER_USER=myuser
-DOCKER_USER   ?= tirthankark
+DOCKER_USER   ?= your-dockerhub-username
 IMAGE_NAME    ?= pandal-hopping-api
 REGISTRY      ?= docker.io
 
@@ -103,16 +103,9 @@ push: ## Push existing local tags to Docker Hub
 
 # ─── Run locally ──────────────────────────────────────────────────────────────
 
-run: ## Run the container locally (reads .env for secrets)
-	@echo "==> Starting container '$(CONTAINER)' on port $(HOST_PORT)"
-	docker run -d \
-		--name $(CONTAINER) \
-		--env-file $(ENV_FILE) \
-		-e HOST=0.0.0.0 \
-		-p $(HOST_PORT):8080 \
-		--restart unless-stopped \
-		$(IMAGE):latest
-	@echo "==> Container started. API available at http://localhost:$(HOST_PORT)"
+run: ## Run the backend server locally
+	@echo "==> Starting local backend server"
+	cd backend && go run ./cmd/server
 
 stop: ## Stop and remove the local container
 	@echo "==> Stopping and removing container '$(CONTAINER)'"
